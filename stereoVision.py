@@ -40,7 +40,7 @@ def get_smoothness_penalty(self_disparity, neighbors_disparity, penalty_constant
 
 # there is probably a standard better/clearer way to implement this
 def pass_messages(disparity_map, message_passing_rounds):
-	directions = [RIGHT, LEFT, UP, DOWN]
+	directions = [UP, DOWN, RIGHT, LEFT]
 	height, length, max_disparity = disparity_map.shape
 	message_map = np.ones((height, length, len(directions), max_disparity))
 	next_message_map = np.ones((height, length, len(directions), max_disparity))
@@ -57,16 +57,16 @@ def pass_messages(disparity_map, message_passing_rounds):
 					try:
 						if direction == RIGHT:
 								next_message_map[h, l+1, directions.index(LEFT)] = \
-									max_product(disparity_map[h, l], neighbor_messages)
+									min_sum(disparity_map[h, l], neighbor_messages)
 						if direction == LEFT:
 								next_message_map[h, l-1, directions.index(RIGHT)] = \
-									max_product(disparity_map[h, l], neighbor_messages)
+									min_sum(disparity_map[h, l], neighbor_messages)
 						if direction == UP:
 								next_message_map[h+1, l, directions.index(DOWN)] = \
-									max_product(disparity_map[h, l], neighbor_messages)
+									min_sum(disparity_map[h, l], neighbor_messages)
 						if direction == DOWN:
 								next_message_map[h-1, l, directions.index(UP)] = \
-									max_product(disparity_map[h, l], neighbor_messages)
+									min_sum(disparity_map[h, l], neighbor_messages)
 					except:
 						pass
 				print h
@@ -93,17 +93,19 @@ def get_belief(disparity_map, message_map):
 	return final_disparity_map
 
 
-def max_product(self_disparity_cost, neighbor_messages):
+def min_sum(self_disparity_cost, neighbor_messages):
 	max_disparity = len(self_disparity_cost)
-	normalization_constant = 0.
 	message_vec = [sys.maxint for i in range(max_disparity)]
+
+	neighbor_message_contributions = np.zeros(max_disparity)
+	for disparity in range(max_disparity):
+		for neighbor_message in neighbor_messages:
+			neighbor_message_contributions[disparity] += neighbor_message[disparity]
+
 	for disparity1 in range(max_disparity): # message recipient disparity
 		for disparity2 in range(max_disparity): # own disparity
-			neighbor_message_contribution = 0.
-			for neighbor_message in neighbor_messages:
-				neighbor_message_contribution += neighbor_message[disparity2]
-			possible_val = self_disparity_cost[disparity2] + get_smoothness_penalty(\
-				disparity1, disparity2) + neighbor_message_contribution
+			neighbor_message_contribution = neighbor_message_contributions[disparity2]
+			possible_val = self_disparity_cost[disparity2] + get_smoothness_penalty(disparity1, disparity2) + neighbor_message_contribution
 			if possible_val < message_vec[disparity1]:
 				message_vec[disparity1] = possible_val
 	message_vec = message_vec / np.sum(message_vec)
