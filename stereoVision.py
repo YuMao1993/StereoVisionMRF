@@ -122,10 +122,13 @@ def get_block_pixel_diff(left_img, right_img, left_location, disparity, block_si
 def get_cost_by_disparity(left_img, right_img, left_location, max_disparity, block_size):
 	disparity_cost = [0. for i in range(max_disparity)]
 	max_shift = max_disparity + block_size / 2
+
+	# for sake of simplicity, ignore edge cases
 	if left_location[0] - max_shift < 0 or left_location[1] - max_shift < 0 or \
 		left_location[0] + max_shift > len(left_img) or left_location[1] + max_shift > len(left_img[0]):
 		return disparity_cost
 	disparity = 0
+	
 	while disparity < max_disparity:
 		disparity_cost[disparity] = get_block_pixel_diff(left_img, right_img, left_location, disparity, block_size)
 		disparity += 1
