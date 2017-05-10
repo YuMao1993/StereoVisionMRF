@@ -20,7 +20,7 @@ def load_images(left_dir, right_dir):
 
 
 def produce_disparity_img(left_dir='tsukuba-imL.png', right_dir='tsukuba-imR.png',\
-	max_disparity=16, message_passing_rounds=5, block_size=5):
+	max_disparity=16, message_passing_rounds=3, block_size=5):
 	left_img, right_img = load_images(left_dir, right_dir)
 	height, length = left_img.shape
 	disparity_map = np.zeros((height, length, max_disparity))
@@ -45,9 +45,9 @@ def pass_messages(disparity_map, message_passing_rounds):
 	message_map = np.ones((height, length, len(directions), max_disparity))
 	next_message_map = np.ones((height, length, len(directions), max_disparity))
 	for m_round in range(message_passing_rounds):
-		for direction in directions:
-			for h in range(height):
-				for l in range(length):
+		for h in range(height):
+			for l in range(length):
+				for direction in directions:
 					neighbor_messages = []
 					# exclude the message from the neighbor we are passing to
 					for i in range(len(directions)):
